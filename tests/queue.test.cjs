@@ -147,3 +147,16 @@ test('writes without the inherited writer descriptor are refused',t=>{
   assert.throws(()=>readOnly.importBatch(batch),/lock herdado/);
   assert.equal(readOnly.summary().jobs.length,2);
 });
+test('historical exclusion removes previously imported pending jobs without resending',t=>{
+  const {q,id,batch}=fixture(t);
+  q.discardPending(id,'historical-do-not-resend');
+  assert.equal(q.load().jobs[id].phase,'discarded');
+  assert.equal(q.next().id,batch.jobs[1].id);
+  q.importBatch(batch);
+  assert.equal(q.load().jobs[id].phase,'discarded');
+});
+test('historical exclusion cannot erase a newly active submission',t=>{
+  const {q,id,prepared}=fixture(t);prepared();q.beginSubmit(id);
+  assert.throws(()=>q.discardPending(id,'existing file'),/proibida/);
+  assert.equal(q.load().jobs[id].phase,'submitting');
+});

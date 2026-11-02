@@ -24,7 +24,7 @@ def manifests():
 def main():
     available = manifests()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['sites', 'status', 'importar', 'diagnostico'])
+    parser.add_argument('command', choices=['sites', 'status', 'importar', 'diagnostico', 'preparar'])
     parser.add_argument('bot', nargs='?', choices=sorted(available))
     parser.add_argument('batch', nargs='?', type=Path)
     args = parser.parse_args()
@@ -62,6 +62,23 @@ def main():
     os.set_inheritable(fd, True)
     os.environ['KLAUS_LOCK_FD'] = str(fd)
     os.environ['KLAUS_DATA_DIR'] = str(data)
+    if args.command == 'preparar':
+        if args.batch:
+            parser.error('A preparação usa os prompts locais do lote atual; não recebe outro lote.')
+        import importlib.util
+        recovery = REPO / 'bots' / args.bot / 'recuperar.py'
+        if not recovery.is_file():
+            raise RuntimeError('Esta integração não possui recuperação implementada.')
+        spec = importlib.util.spec_from_file_location('klaus_recovery', recovery)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        try:
+            prepared = module.prepare(REPO, folder, available[args.bot], fd)
+        finally:
+            os.close(fd)
+        if not prepared:
+            raise RuntimeError('Preparação não concluída. O relatório indicado acima contém a causa; nenhum envio foi feito.')
+        return
     command = 'import' if args.command == 'importar' else args.command
     argv = ['node', str(REPO / 'core/cli.cjs'), command, args.bot]
     if args.batch:

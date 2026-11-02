@@ -26,4 +26,4 @@ O núcleo não adivinha o estado remoto e não transforma timeout em permissão 
 
 ## Limites atuais
 
-O contrato de fila está implementado e testado. Ainda não existe integração de geração ativada nesta revisão. A pasta FLUX contém o manifesto e o coletor usado para analisar o projeto anterior; o executor será incorporado após a leitura dos arquivos atuais, sem executar instaladores antigos ou substituir o perfil autenticado.
+O contrato de fila está implementado e testado. Ainda não existe integração de geração ativada nesta revisão. A pasta FLUX contém manifesto, coletor, recuperação do Chromium, importação conservadora e preparação de formulário. O código antigo e os estados já foram analisados. A próxima verificação é a preparação na sessão real e o mecanismo de autorização gratuita; não se executam instaladores antigos nem se substitui o perfil autenticado.

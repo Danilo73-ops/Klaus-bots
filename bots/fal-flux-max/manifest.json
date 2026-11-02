@@ -1,7 +1,7 @@
 {
   "id": "fal-flux-max",
   "title": "fal.ai — FLUX 3 Max",
-  "stage": "diagnostics-and-recovery",
+  "stage": "browser-recovery-and-preflight",
   "diagnostic": "diagnostico.py",
   "url": "https://fal.ai/models/blackforestlabs/flux-3-max/text-to-video",
   "cdp": "http://127.0.0.1:9261",

@@ -136,6 +136,14 @@ class Queue {
   failBeforeSubmit(id,message) {
     return this.change(id,'pre_submit_failure',['pending','prepared'],job=>{job.phase='pending';job.retryable=true;job.error=String(message);});
   }
+  discardPending(id,reason) {
+    if(!Object.hasOwn(this.load().jobs,id))return false;
+    const current=this.load().jobs[id];
+    if(['discarded','completed','rejected_content','failed_remote'].includes(current.phase))return false;
+    return this.change(id,'legacy_exclusion',['pending','prepared'],job=>{
+      job.phase='discarded';job.retryable=false;job.error=String(reason);return true;
+    });
+  }
   beginSubmit(id) {
     return this.change(id,'submission_boundary',['prepared'],(job,data)=>{
       requireCondition(!Object.values(data.jobs).some(j=>j.id!==id&&ACTIVE.has(j.phase)), 'Existe solicitação ativa ou incerta; reconcilie antes de enviar.');
