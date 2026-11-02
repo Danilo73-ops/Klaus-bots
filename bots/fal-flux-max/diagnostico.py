@@ -15,7 +15,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 JOB = re.compile(r"^job(?:7[1-9]|8\d|9[0-5])(?:_|\.)")
 SENSITIVE = re.compile(
     r"^(?:authorization|proxy.?authorization|cookies?|set.?cookie|headers?|"
@@ -95,6 +95,34 @@ function inspectDOM() {
     ...describe(e),value:e.tagName==='SELECT'?e.value:null,
     selectedOptions:e.tagName==='SELECT'?[...e.selectedOptions].map(o=>({value:o.value,text:short(o.textContent)})):null
   }));
+  // Read the structure near the advanced-field captions. These fields can be
+  // rendered as buttons or radio groups rather than comboboxes/switches.
+  const thin=e=>({
+    ...identity(e),text:short(e.innerText,90),ariaLabel:short(e.getAttribute('aria-label'),90),
+    ariaLabelledby:e.getAttribute('aria-labelledby'),type:e.getAttribute('type'),
+    value:e.matches('select,input:not([name="prompt"])')?short(e.value,60):null,
+    checked:typeof e.checked==='boolean'?e.checked:null,
+    ariaChecked:e.getAttribute('aria-checked'),dataState:e.getAttribute('data-state'),
+    disabled:!!e.disabled,visible:!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'
+  });
+  const captions=/^(?:Aspect Ratio|Generate Audio|Reasoning Level|Duration|Resolution|More)$/i;
+  const matches=[...document.querySelectorAll('label,legend,span,p,div')].filter(e=>{
+    if(!captions.test(short(e.textContent,80)))return false;
+    return ![...e.children].some(child=>captions.test(short(child.textContent,80)));
+  }).slice(0,24);
+  const fieldRegions=matches.map(e=>{
+    const ancestors=[];
+    for(let p=e.parentElement;p&&ancestors.length<7;p=p.parentElement){
+      const children=[...p.querySelectorAll('button,[role="radio"],[role="switch"],[role="combobox"],select,input')]
+        .filter(c=>c.getAttribute('name')!=='prompt').slice(0,16).map(thin);
+      ancestors.push({...identity(p),text:p.querySelector('textarea')?null:short(p.innerText,250),
+        children,childCount:p.querySelectorAll('button,[role="radio"],[role="switch"],[role="combobox"],select,input').length});
+      if(children.length>1&&ancestors.length>=2)break;
+    }
+    return {caption:short(e.textContent,80),element:thin(e),ancestors};
+  });
+  const formControls=[...document.querySelectorAll('form button,form input,form select,form [role="radio"],form [role="switch"],form [role="combobox"]')]
+    .filter(e=>e.getAttribute('name')!=='prompt').slice(0,80).map(thin);
   const body=document.body?.innerText||'';
   const status=body.match(/(?:Free video up to[^\r\n]{0,180}|\d+\s+free runs? left)/gi)||[];
   const resources=performance.getEntriesByType('resource').filter(e=>{
@@ -110,7 +138,7 @@ function inspectDOM() {
   }));
   return {readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),
     viewport:{width:innerWidth,height:innerHeight,devicePixelRatio,scrollX,scrollY},
-    fields,buttons,controls,offers:status.slice(0,8),results,resources,
+    fields,buttons,controls,fieldRegions,formControls,offers:status.slice(0,8),results,resources,
     flags:{contentBlocked:/material flagged by a content checker/i.test(body),
       inputValidationError:/Error validating the input/i.test(body),
       inProgress:/\bIn progress\b|\bQueued\b|\bEm andamento\b/i.test(body)},
