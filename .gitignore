@@ -1,0 +1,25 @@
+# Git / .gitignore / Git / Klaus-bots
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+runtime/
+data/
+logs/
+backups/
+perfil/
+profiles/
+cookies*
+storage-state*
+state.json
+estado.json
+*.mp4
+*.part
+*.zip
+*.log
+*.pem
+*.key
+lotes/
+batches/private/

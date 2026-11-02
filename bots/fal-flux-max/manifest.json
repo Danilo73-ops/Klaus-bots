@@ -1,0 +1,18 @@
+{
+  "id": "fal-flux-max",
+  "title": "fal.ai — FLUX 3 Max",
+  "stage": "diagnostics-and-recovery",
+  "diagnostic": "diagnostico.py",
+  "url": "https://fal.ai/models/blackforestlabs/flux-3-max/text-to-video",
+  "cdp": "http://127.0.0.1:9261",
+  "legacyDirectory": "klaus-fal-robo-v1",
+  "parameters": {
+    "duration": 15,
+    "resolution": "720p",
+    "aspect_ratio": "9:16",
+    "generate_audio": true,
+    "reasoning_level": "high"
+  },
+  "paymentPolicy": "free-only",
+  "generationEnabled": false
+}
