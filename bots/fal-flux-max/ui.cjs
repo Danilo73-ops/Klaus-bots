@@ -74,7 +74,20 @@ async function nativeConfigClick(handle) {
 async function clickNamed(page,name) {
   const candidates=page.locator('button:visible,[role="tab"]:visible').filter({hasText:new RegExp('^\\s*'+name+'\\s*$','i')});
   if(await candidates.count()!==1)return false;
-  await nativeConfigClick(candidates);await sleep(300);return true;
+  // The FLUX input panel ends behind a sticky action footer. In the live
+  // Android viewport, More had its top at y=872 in an 873 px viewport and its
+  // centre was covered. A DOM click did not open the advanced fields. Move only
+  // this already-identified non-submit control into view, then let Playwright
+  // issue the trusted pointer sequence.
+  await candidates.evaluate((e,expected)=>{
+    const text=(e.innerText||e.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();
+    if(text.toLowerCase()!==expected.toLowerCase()||/^Run/i.test(text)||e.tagName==='BUTTON'&&e.type==='submit')
+      throw Error('Controle nomeado deixou de ser seguro para ativação.');
+    e.scrollIntoView({block:'center',inline:'nearest'});
+  },name);
+  await sleep(120);
+  await candidates.click({timeout:5000});
+  await sleep(300);return true;
 }
 async function control(page,key) {
   return findControl((await formSnapshot(page)).controls,key);
@@ -122,7 +135,14 @@ async function prepareForm(page,job) {
   if(before.signInToRun)throw Error('O perfil abriu sem uma sessão autenticada para Run. Nenhum login ou nova conta foi criado.');
   await promptLocator(page);
   // Expanding More is based on absence of the control, not its current value.
-  if(!await control(page,'aspect_ratio')||!await control(page,'generate_audio'))await clickNamed(page,'More');
+  if(!await control(page,'aspect_ratio')||!await control(page,'generate_audio')){
+    if(!await clickNamed(page,'More'))throw Error('Botão More único não encontrado para abrir as configurações adicionais.');
+    const until=Date.now()+5000;
+    while(Date.now()<until){
+      if(await control(page,'aspect_ratio')&&await control(page,'generate_audio'))break;
+      await sleep(100);
+    }
+  }
   for(const key of ['duration','resolution','aspect_ratio'])await setField(page,key,job.parameters[key]);
   await enableAudio(page);
   const reasoning=await control(page,'reasoning_level');

@@ -57,12 +57,13 @@ function simulatedPage({revertPrompt=false,running=false,missingRun=false}={}) {
         nth:i=>locator(i,filtered),filter:({hasText})=>locator(index,hasText),
         innerText:async()=>text(),inputValue:async()=>revertPrompt&&state.prompt!=='old text'&&state.prompt!==''?'reverted':state.prompt,
         fill:async value=>{state.prompt=value;},
-        evaluate:async fn=>fn({innerText:text(),tagName:'BUTTON',type:'button',getAttribute:()=>null,getBoundingClientRect:()=>({width:100,height:30}),
+        click:async()=>{if(kind==='named')state.more=true;},
+        evaluate:async (fn,arg)=>fn({innerText:text(),tagName:'BUTTON',type:'button',getAttribute:()=>null,scrollIntoView:()=>{},getBoundingClientRect:()=>({width:100,height:30}),
           click:()=>{
             if(kind==='named'){state.more=true;return;}
             if(kind==='option'){state.values[state.optionKey]=text();state.optionKey=null;return;}
             const key=keys[index];if(key==='generate_audio')state.audio=!state.audio;else state.optionKey=key;
-          }})
+          }},arg)
       };return object;
     }
     return locator();
